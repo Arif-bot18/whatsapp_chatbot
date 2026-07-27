@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arif Automation Lab - Management Hub</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-[#0B0F19] text-[#E2E8F0] h-screen flex flex-col font-sans overflow-hidden">
+
+    <header class="bg-[#111827] border-b border-[#1F2937] px-6 py-4 flex justify-between items-center shadow-lg">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                <i data-lucide="cpu" class="text-white w-5 h-5"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-wide bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Arif Automation Lab</h1>
+                <p class="text-xs text-cyan-400 font-medium tracking-wider uppercase">Live Control Hub</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 bg-[#1F2937] px-3 py-1.5 rounded-full border border-[#374151]">
+            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+            <span class="text-xs text-gray-300 font-medium">Server Connected</span>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden relative w-full h-full">
+        
+        <aside id="sidebar-panel" class="w-full md:w-80 h-full bg-[#0F172A] border-r border-[#1F2937] flex flex-col shrink-0 transition-all duration-300">
+            <div class="p-4 border-b border-[#1F2937] bg-[#111827]/50">
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-3 top-2.5 text-gray-500 w-4 h-4"></i>
+                    <input type="text" placeholder="Search student records..." class="w-full bg-[#1E293B] border border-[#334155] rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 transition-colors">
+                </div>
+            </div>
+            <div id="student-list" class="flex-1 overflow-y-auto divide-y divide-[#1F2937]/50 p-3 space-y-2">
+                <div class="text-center text-sm text-gray-500 mt-8 animate-pulse">Loading active conversations...</div>
+            </div>
+        </aside>
+
+        <main id="chat-panel" class="hidden md:flex flex-1 flex-col bg-[#0B0F19] relative h-full w-full overflow-hidden transition-all duration-300">
+            
+            <div class="bg-[#111827]/80 backdrop-blur px-4 py-3 border-b border-[#1F2937] flex flex-col sm:flex-row gap-3 justify-between sm:items-center min-h-[72px]">
+                <div class="flex items-center gap-3">
+                    <button onclick="closeActiveChatScreen()" class="md:hidden flex items-center justify-center p-2 text-gray-400 hover:text-white mr-1 active:scale-90 transition-all cursor-pointer">
+                        <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                    </button>
+                    <div class="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-800 rounded-full flex items-center justify-center text-sm font-bold border border-[#374151]" id="active-avatar">
+                        ?
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-white tracking-wide text-sm sm:text-base" id="active-chat-title">No Chat Selected</h2>
+                        <p class="text-xs text-gray-400" id="active-chat-subtitle">Select a student from the sidebar to begin</p>
+                    </div>
+                </div>
+                
+                <div id="takeover-container" class="flex items-center max-w-full overflow-x-auto sm:overflow-x-visible">
+                    <button onclick="triggerTakeover()" id="takeover-btn" class="hidden items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap">
+                        <i data-lucide="hand" class="w-4 h-4"></i> Takeover Chat (Pause Bot)
+                    </button>
+                </div>
+            </div>
+
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 flex flex-col space-y-4 bg-radial from-[#0F172A]/30 to-[#0B0F19]">
+                <div class="h-full flex flex-col items-center justify-center text-gray-500 space-y-2">
+                    <i data-lucide="message-square" class="w-12 h-12 text-gray-700"></i>
+                    <p class="text-sm">Select an active conversation to inspect live stream logs.</p>
+                </div>
+            </div>
+
+            <!-- CHAT ENTRY BAR FOOTER -->
+            <div id="chat-footer" class="hidden p-4 bg-[#111827] border-t border-[#1F2937]">
+                
+                <!-- Attachment Preview Box -->
+                <div id="attachment-preview-box" class="hidden flex items-center justify-between bg-[#1E293B] border border-cyan-500/30 rounded-xl p-3 mb-3 max-w-sm">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-cyan-400 border border-slate-700" id="preview-icon-container">
+                            <i data-lucide="file-text" class="w-5 h-5"></i>
+                        </div>
+                        <div class="overflow-hidden">
+                            <p id="preview-filename" class="text-sm font-medium text-white truncate max-w-[200px]">document.pdf</p>
+                            <p id="preview-filesize" class="text-xs text-gray-400">0.0 KB</p>
+                        </div>
+                    </div>
+                    <button onclick="clearAttachment()" class="text-gray-400 hover:text-rose-400 p-1.5 rounded-lg transition-colors cursor-pointer">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- 🟢 MODE 1: FREE-STYLE TEXT BAR (Visible inside the 24-hour window) -->
+                <div id="normal-text-input-bar" class="flex items-center gap-3 bg-[#1E293B] border border-[#334155] rounded-xl px-4 py-2.5 focus-within:border-cyan-500 transition-colors">
+                    <input type="file" id="hidden-file-input" class="hidden" onchange="handleFileSelection(this)">
+                    
+                    <button onclick="document.getElementById('hidden-file-input').click()" class="text-gray-400 hover:text-cyan-400 transition-colors cursor-pointer" title="Send document link">
+                        <i data-lucide="paperclip" class="w-5 h-5"></i>
+                    </button>
+                    
+                    <textarea 
+                        id="manager-input" 
+                        rows="1" 
+                        placeholder="Type a message or add a file caption... (Ctrl + Enter to send)" 
+                        class="flex-1 bg-transparent border-none text-sm text-white focus:outline-none placeholder-gray-500 resize-none overflow-y-auto"
+                        style="max-height: 100px;"
+                    ></textarea>
+                    
+                    <button onclick="sendManualMessage(event)" class="bg-cyan-500 hover:bg-cyan-600 text-slate-950 p-2 rounded-lg font-bold transition-all active:scale-95 shadow-[0_0_10px_rgba(6,182,212,0.3)] cursor-pointer">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- 🟢 HYBRID MODE: META TEMPLATE DROPDOWN BAR WITH MANUAL OVERRIDES -->
+                <form id="meta-template-input-bar" autocomplete="off" onsubmit="event.preventDefault();" class="hidden flex flex-col gap-3 bg-[#1E293B]/60 border border-amber-500/20 rounded-xl p-4">
+                    <div class="flex items-center gap-2 text-amber-400 text-xs font-medium">
+                        <i data-lucide="lock" class="w-4 h-4 shrink-0"></i>
+                        <span>24-Hour Customer Window Closed. Review template variables before sending:</span>
+                    </div>
+                    
+                    <!-- Inputs for Variables -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 uppercase font-semibold mb-1">Student Name ({{1}})</label>
+                            <input type="text" id="tpl-var-name" class="bg-[#0F172A] border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white w-full focus:outline-none focus:border-cyan-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 uppercase font-semibold mb-1">Course Name ({{2}})</label>
+                            <input type="text" id="tpl-var-course" class="bg-[#0F172A] border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white w-full focus:outline-none focus:border-cyan-500">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-3 items-center justify-between border-t border-slate-700/50 pt-3 mt-1">
+                        <select id="template-dropdown" autocomplete="off" name="meta_template_selector_disabled" class="bg-[#0F172A] border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white font-medium focus:outline-none focus:border-cyan-500 w-full sm:w-64">
+                            <option value="institute_welcome_bot">🚀 Welcome & Onboarding</option>
+                            <option value="student_followup_demo">🔔 24-Hour Follow-Up Reminder</option>
+                            <option value="student_special_offer">🎉 Limited Time Special Offer</option>
+                        </select>
+                        
+                        <button type="button" onclick="sendTemplateMessage(this)" class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-5 py-1.5 rounded-lg text-sm font-semibold transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap w-full sm:w-auto">
+                            Send Template
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const BACKEND_URL = "http://127.0.0.1:8000";
+        let selectedStudentPhone = null;
+        let currentAttachmentFile = null;
+        let isSendingMedia = false; 
+        let isEditingReminder = false;
+        let isUserScrollingPastHistory = false; // 🟢 Prevents jump-scrolling glitches
+        // Global Chat Cache
+        const chatCache = {};
+        // Add this at the absolute top of your script block if it isn't there already!
+        if (!window.chatCache) {
+            window.chatCache = {};
+        }
+
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Detect user scrolling to check if they are reading old log messages
+        const msgStreamEl = document.getElementById("chat-messages");
+        msgStreamEl.addEventListener("scroll", () => {
+            // If user scrolls up by more than 80px from the bottom, lock auto-scroll resets
+            const distanceFromBottom = msgStreamEl.scrollHeight - msgStreamEl.clientHeight - msgStreamEl.scrollTop;
+            isUserScrollingPastHistory = distanceFromBottom > 80;
+        });
+
+        function handleFileSelection(input) {
+            if (!input.files || input.files.length === 0) return;
+            const file = input.files[0];
+            currentAttachmentFile = file;
+            document.getElementById("preview-filename").innerText = file.name;
+            document.getElementById("preview-filesize").innerText = (file.size / 1024).toFixed(1) + " KB";
+            const iconContainer = document.getElementById("preview-icon-container");
+            if (file.type.startsWith("image/")) {
+                iconContainer.innerHTML = `<i data-lucide="image" class="w-5 h-5 text-emerald-400"></i>`;
+            } else {
+                iconContainer.innerHTML = `<i data-lucide="file-text" class="w-5 h-5 text-cyan-400"></i>`;
+            }
+            lucide.createIcons(); 
+            document.getElementById("attachment-preview-box").classList.remove("hidden");
+        }
+
+        function clearAttachment() {
+            currentAttachmentFile = null;
+            document.getElementById("hidden-file-input").value = "";
+            document.getElementById("attachment-preview-box").classList.add("hidden");
+        }
+
+        // Helper function to format dates nicely like WhatsApp
+        function getWhatsAppDateLabel(dateObj) {
+            const today = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(today.getDate() - 1);
+
+            if (dateObj.toDateString() === today.toDateString()) {
+                return "Today";
+            } else if (dateObj.toDateString() === yesterday.toDateString()) {
+                return "Yesterday";
+            } else {
+                return dateObj.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+            }
+        }
+
+        // 1. FETCH STUDENTS LOG ROUTINE
+        async function fetchStudents() {
+            try {
+                const res = await fetch(`${BACKEND_URL}/dashboard/students`);
+                const data = await res.json();
+                
+                if (data.status === "success") {
+                    const listContainer = document.getElementById("student-list");
+                    listContainer.innerHTML = ""; 
+
+                    data.students.forEach(student => {
+                        const isBotPaused = student.is_human_handling;
+                        const hasUnread = student.has_unread;
+                        const card = document.createElement("div");
+                        
+                        // 🟢 1. ADDED 'student-card' CLASS NAME SO THE DOM QUERY CAN FIND IT
+                        // 🟢 2. FIXED STICKY ACTIVE THEME BORDER CHECK ON INITIAL LOAD/RELOAD
+                        card.className = `student-card p-4 mx-1 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${
+                            selectedStudentPhone === student.phone_number 
+                            ? 'bg-[#1E293B] border border-cyan-500 shadow-md' 
+                            : 'hover:bg-[#1E293B]/50 border border-transparent'
+                        }`;
+                        
+                        // 🟢 3. ATTACH THE 'data-phone' ATTRIBUTE FOR THE SHIFTING SWITCH HIGHLIGHTER
+                        card.setAttribute("data-phone", student.phone_number);
+                        
+                        card.onclick = () => selectStudent(student);
+
+                        card.innerHTML = `
+                            <div class="flex items-center gap-4 relative w-full">
+                                ${hasUnread ? '<span class="absolute left-3 top-0 w-3.5 h-3.5 bg-cyan-500 rounded-full shadow-[0_0_12px_#06b6d4] animate-pulse z-50 border-2 border-[#0F172A]"></span>' : ''}
+                                
+                                <div class="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center font-bold text-sm text-gray-300 border ${hasUnread ? 'border-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.4)]' : 'border-gray-700'} shrink-0 relative">
+                                    ${student.phone_number.slice(-4)}
+                                </div>
+                                
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-sm font-semibold text-white tracking-wide truncate">+${student.phone_number}</h4>
+                                    <p class="text-xs text-gray-400">Seen: ${new Date(student.last_seen).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                                </div>
+                                
+                                <div class="text-right flex flex-col items-end shrink-0">
+                                    ${isBotPaused 
+                                        ? '<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Human</span>' 
+                                        : '<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Bot</span>'}
+                                    
+                                    ${student.is_reminder_due 
+                                        ? '<span class="block text-center text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 shadow-[0_0_8px_rgba(244,63,94,0.2)] animate-pulse mt-1">⚠️ OVERDUE</span>' 
+                                        : ''}
+
+                                    ${student.needs_escalation 
+                                        ? '<span class="block text-center text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.2)] animate-pulse mt-1">🚨 BOT LOOP</span>' 
+                                        : ''}
+                                </div>
+                            </div>
+                        `;
+                        listContainer.appendChild(card);
+                    });
+                }
+            } catch (err) {
+                console.error("Dashboard failed to sync database arrays:", err);
+            }
+        }
+
+
+        async function sendTemplateMessage() {
+            if (!selectedStudentPhone) return;
+
+            // 1. Locate the button triggering the script safely
+            const btn = document.querySelector("#meta-template-input-bar button") || document.querySelector("button[onclick*='sendTemplateMessage']");
+            let originalText = "Send Template";
+
+            if (btn) {
+                originalText = btn.innerText;
+                btn.innerText = "Sending...";
+                btn.disabled = true;
+            }
+
+            try {
+                const chosenTemplateName = document.getElementById("template-dropdown").value;
+
+                // 🚀 Dynamic Extraction Backup: Target by ID or find the inputs inside the container
+                const nameInput = document.getElementById("tpl-var-name") || document.querySelector("input[placeholder*='name']");
+                const courseInput = document.getElementById("tpl-var-course") || document.querySelector("input[placeholder*='course']");
+
+                let var1Value = nameInput ? nameInput.value.trim() : "";
+                let var2Value = courseInput ? courseInput.value.trim() : "";
+
+                // Apply backup fallbacks ONLY if the extracted text fields are completely blank
+                if (!var1Value) var1Value = "Learner";
+                if (!var2Value) var2Value = "Python AI Automation";
+
+                console.log("🚀 LATEST READ VALUE:", { var1Value, var2Value });
+
+
+                // 3. RESTORED: The actual network request handoff to the FastAPI backend
+                const res = await fetch(`${BACKEND_URL}/dashboard/send-message`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        phone_number: selectedStudentPhone,
+                        message_type: "template",
+                        message_text: chosenTemplateName,
+                        template_var1: var1Value,
+                        template_var2: var2Value
+                    })
+                });
+
+                const data = await res.json();
+                
+                // 4. Handle frontend state adjustments on successful delivery
+                if (data.status === "success") {
+                    await syncActiveMessagesFeed();
+                    
+                    const normalBar = document.getElementById("normal-text-input-bar");
+                    const templateBar = document.getElementById("meta-template-input-bar");
+                    
+                    if (templateBar && normalBar) {
+                        templateBar.style.display = "none";
+                        templateBar.classList.add("hidden");
+                        
+                        normalBar.style.display = "flex";
+                        normalBar.classList.remove("hidden");
+                    }
+
+                    document.getElementById("manager-input").value = "";
+                    fetchStudents();
+                }
+            } catch (err) {
+                console.error("Template submission error:", err);
+            } finally {
+                // 5. Clean variable clean-up execution
+                if (btn) {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                }
+            }
+        }
+
+            
+        // 2. CONVERSATION FOCUS SELECTION LOGIC
+        async function selectStudent(student) {
+            isEditingReminder = false; 
+
+            // Mobile screen layout slide triggers
+            document.getElementById("sidebar-panel").classList.add("hidden", "md:flex");
+            document.getElementById("chat-panel").classList.remove("hidden");
+            document.getElementById("chat-panel").classList.add("flex");        
+
+            // Calculate hours elapsed for the 24-hour template validation window
+            const lastSeenDate = student.last_seen ? new Date(student.last_seen) : new Date();
+            const now = new Date();
+            const hoursElapsed = (now - lastSeenDate) / (1000 * 60 * 60);
+
+            const normalBar = document.getElementById("normal-text-input-bar");
+            const templateBar = document.getElementById("meta-template-input-bar");
+
+            // Handle structural UI updates based on the 24-hour window rules
+            if (hoursElapsed >= 24) {
+                if (normalBar) {
+                    normalBar.style.display = "none";
+                    normalBar.classList.add("hidden");
+                }
+                if (templateBar) {
+                    templateBar.style.display = "flex";
+                    templateBar.classList.remove("hidden");
+                }
+                
+                const nameInput = document.getElementById("tpl-var-name");
+                const courseInput = document.getElementById("tpl-var-course");
+                
+                if (nameInput && courseInput) {
+                    nameInput.value = student.name || "Learner";
+                    // Swapped 'student.course' to 'student.goal' to align with Supabase
+                    courseInput.value = student.goal || "Python AI Automation"; 
+                }
+            } else {
+                if (templateBar) {
+                    templateBar.style.display = "none";
+                    templateBar.classList.add("hidden");
+                }
+                if (normalBar) {
+                    normalBar.style.display = "flex";
+                    normalBar.classList.remove("hidden");
+                }
+            }
+
+            if (selectedStudentPhone !== student.phone_number) {
+                isUserScrollingPastHistory = false; // Reset scrolling locks on selection swap
+            }
+
+            // 🟢 SWAP HIGHLIGHT FIX: Wipe old highlights and light up the new card instantly
+            document.querySelectorAll(".student-card").forEach(card => {
+                card.classList.remove("bg-[#1E293B]", "border-cyan-500", "shadow-md"); 
+                card.classList.add("border-transparent");
+            });
+
+            const activeCard = document.querySelector(`.student-card[data-phone="${student.phone_number}"]`);
+            if (activeCard) {
+                activeCard.classList.remove("border-transparent");
+                activeCard.classList.add("bg-[#1E293B]", "border-cyan-500", "shadow-md");
+            }
+
+            // OPTIMISTIC CACHE LAYER: Render cached messages instantly if they exist
+            if (window.chatCache && window.chatCache[student.phone_number]) {
+                renderMessages(window.chatCache[student.phone_number]);
+            } else {
+                const chatContainer = document.getElementById("chat-messages-container");
+                if (chatContainer) {
+                    chatContainer.innerHTML = '<div class="text-center text-gray-500 py-8 text-sm">Loading chat history...</div>';
+                }
+            }
+
+            // Fire off unread status cleanups silently in background
+            fetch(`${BACKEND_URL}/dashboard/clear-unread/${student.phone_number}`, { method: "POST" });
+            selectedStudentPhone = student.phone_number;
+            
+            document.getElementById("active-chat-title").innerText = `+${student.phone_number}`;
+            document.getElementById("active-avatar").innerText = student.phone_number.slice(-2);
+            
+            const subtitle = document.getElementById("active-chat-subtitle");
+            const takeoverContainer = document.getElementById("takeover-container");
+            
+            const reminderControlHtml = `
+                <div class="flex flex-wrap items-center gap-1.5 bg-[#1E293B] border border-amber-500/20 px-2.5 py-1 rounded-xl text-xs max-w-full">
+                    <span class="text-amber-400 font-semibold flex items-center gap-1 shrink-0">
+                        <i data-lucide="bell" class="w-3.5 h-3.5"></i> Follow-up:
+                    </span>
+                    <input type="number" id="custom-time-val" min="1" max="5000" value="30" 
+                        oninput="isEditingReminder = true;" 
+                        class="w-10 bg-[#0F172A] border border-slate-700 rounded px-1 py-0.5 text-center text-white font-medium focus:outline-none focus:border-cyan-500">
+                    <select id="custom-time-unit" 
+                        onchange="isEditingReminder = true;" 
+                        class="bg-[#0F172A] border border-slate-700 rounded py-0.5 text-gray-300 font-medium focus:outline-none">
+                        <option value="min">Mins</option>
+                        <option value="hr">Hrs</option>
+                    </select>
+                    <button onclick="handleCustomReminderSubmit()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 px-2 py-0.5 rounded font-bold transition-all active:scale-95 cursor-pointer shrink-0">
+                        Lock
+                    </button>
+                </div>
+            `;
+            
+            if (!isEditingReminder) {
+                if (student.is_human_handling) {
+                    subtitle.innerHTML = `<span class="text-amber-400 font-medium">● Bot is currently Paused</span> — Human Manager in control`;
+                    takeoverContainer.innerHTML = reminderControlHtml; 
+                } else {
+                    subtitle.innerHTML = `<span class="text-cyan-400 font-medium">● Bot is Active</span> — Monitoring responses`;
+                    takeoverContainer.innerHTML = `
+                        <button onclick="triggerTakeover()" id="takeover-btn" class="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-4 py-2 rounded-xl font-medium text-sm transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap">
+                            <i data-lucide="hand" class="w-4 h-4"></i> Takeover Chat (Pause Bot)
+                        </button>
+                    `;
+                }
+                lucide.createIcons();
+            }
+
+            // FORCE RESET TEXT AREA VALUE ON SWAP
+            document.getElementById("manager-input").value = ""; 
+
+            // Sync the final message feed from the network and silently populate the cache
+            try {
+                await syncActiveMessagesFeed();
+            } catch (err) {
+                console.error("Background sync failed:", err);
+            }
+            
+            // Make sure the main footer container is visible
+            document.getElementById("chat-footer").classList.remove("hidden");
+        }
+
+        
+        // 3. SEPARATED FEED SYNCHRONIZATION (Fixes jumpy scrolling glitches completely)
+        async function syncActiveMessagesFeed(overrideMessages = null) {
+            if (!selectedStudentPhone) return;
+            try {
+                let messagesToRender = overrideMessages;
+
+                // If no pre-cached messages are passed, fetch directly from backend
+                if (!messagesToRender) {
+                    const res = await fetch(`${BACKEND_URL}/dashboard/messages/${selectedStudentPhone}`);
+                    const data = await res.json();
+                    
+                    if (data.status === "success") {
+                        messagesToRender = data.messages;
+                        // Keep local cache fresh
+                        if (!window.chatCache) window.chatCache = {};
+                        window.chatCache[selectedStudentPhone] = messagesToRender;
+                    } else {
+                        return;
+                    }
+                }
+
+                const msgStream = document.getElementById("chat-messages");
+                if (!msgStream) return;
+                msgStream.innerHTML = ""; 
+
+                if (!messagesToRender || messagesToRender.length === 0) {
+                    msgStream.innerHTML = `<div class="text-center text-sm text-gray-500 mt-12">No messages logged yet.</div>`;
+                    return;
+                }
+
+                let lastDateLabel = "";
+
+                messagesToRender.forEach(msg => {
+                    const msgDate = msg.created_at ? new Date(msg.created_at) : new Date();
+                    const timeString = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const currentDateLabel = typeof getWhatsAppDateLabel === "function" ? getWhatsAppDateLabel(msgDate) : "TODAY";
+
+                    // Clean, inline Date Dividers
+                    if (currentDateLabel !== lastDateLabel) {
+                        const dateDivider = document.createElement("div");
+                        dateDivider.className = "flex justify-center w-full my-4"; 
+                        dateDivider.innerHTML = `
+                            <span class="bg-[#111827] border border-[#1F2937] text-gray-400 text-[11px] font-semibold px-3 py-1 rounded-full shadow-sm uppercase tracking-wider">
+                                ${currentDateLabel}
+                            </span>
+                        `;
+                        msgStream.appendChild(dateDivider);
+                        lastDateLabel = currentDateLabel;
+                    }
+
+                    const msgDiv = document.createElement("div");
+                    
+                    if (msg.sender === "student") {
+                        msgDiv.className = "flex justify-start w-full mb-1"; 
+                        msgDiv.innerHTML = `
+                            <div class="bg-[#1E293B] border border-[#334155] text-gray-100 rounded-2xl rounded-tl-none pl-4 pr-14 pt-2.5 pb-3.5 max-w-xs text-sm shadow-md relative group">
+                                <p class="leading-relaxed break-words">${msg.message_text ? msg.message_text.replace(/\n/g, '<br>') : ''}</p>
+                                <span class="absolute bottom-1 right-2 text-[9px] text-gray-500 select-none font-medium uppercase">${timeString}</span>
+                            </div>
+                        `;
+                    } else {
+                        msgDiv.className = "flex justify-end w-full mb-1"; 
+                        let buttonsHTML = "";
+                        let cleanButtons = [];
+
+                        if (msg.buttons) {
+                            if (Array.isArray(msg.buttons) && msg.buttons.length > 0) {
+                                if (msg.buttons.length === 1 && typeof msg.buttons[0] === 'string' && msg.buttons[0].includes(',')) {
+                                    cleanButtons = msg.buttons[0].split(",");
+                                } else {
+                                    cleanButtons = msg.buttons;
+                                }
+                            } else if (typeof msg.buttons === 'string' && msg.buttons.includes('[')) {
+                                const matches = msg.buttons.match(/\[([^\]]+)\]/);
+                                if (matches && matches[1]) {
+                                    cleanButtons = matches[1].split(",");
+                                }
+                            }
+                        }
+
+                        if (cleanButtons && cleanButtons.length > 0) {
+                            buttonsHTML = `<div class="flex flex-wrap justify-end gap-1.5 mt-2 pb-2">`;
+                            cleanButtons.forEach(btnTitle => {
+                                if (btnTitle) {
+                                    buttonsHTML += `
+                                        <span class="text-xs bg-[#0F172A] text-cyan-400 border border-cyan-500/30 px-2.5 py-1 rounded-lg font-medium shadow-sm">
+                                            🔘 ${btnTitle.trim()}
+                                        </span>`;
+                                }
+                            });
+                            buttonsHTML += `</div>`;
+                        }
+
+                        const displayWord = msg.message_text ? String(msg.message_text).replace(/\n/g, '<br>') : 'Options Menu:';
+                        msgDiv.innerHTML = `
+                            <div class="bg-gradient-to-br from-cyan-600 to-blue-700 text-white rounded-2xl rounded-tr-none pl-4 pr-14 pt-2.5 pb-3.5 max-w-xs text-sm shadow-md text-left relative group">
+                                <p class="leading-relaxed break-words">${displayWord}</p>
+                                ${buttonsHTML}
+                                <span class="absolute bottom-1 right-2 text-[9px] text-cyan-200/60 select-none font-medium uppercase">${timeString}</span>
+                            </div>
+                        `;
+                    }
+                    msgStream.appendChild(msgDiv);
+                });
+                
+                if (!isUserScrollingPastHistory) {
+                    msgStream.scrollTop = msgStream.scrollHeight;
+                }
+            } catch (err) {
+                console.error("Sync active stream error:", err);
+            }
+        }
+
+        // CLOSES SCREEN SLIDER TO NAVIGATE BACK TO SIDEBAR
+        function closeActiveChatScreen() {
+            selectedStudentPhone = null; 
+            document.getElementById("chat-panel").classList.remove("flex");
+            document.getElementById("chat-panel").classList.add("hidden");
+            document.getElementById("sidebar-panel").classList.remove("hidden");
+            fetchStudents(); 
+        }
+
+        // 4. EXECUTE BOT TAKEOVER INTERLOCK TRIGGER
+        async function triggerTakeover() {
+            if (!selectedStudentPhone) return;
+            try {
+                const res = await fetch(`${BACKEND_URL}/dashboard/takeover`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ phone_number: selectedStudentPhone })
+                });
+                const data = await res.json();
+                if (data.status === "success") {
+                    await fetchStudents();
+                    const mockActiveObj = { phone_number: selectedStudentPhone, is_human_handling: true };
+                    selectStudent(mockActiveObj);
+                }
+            } catch (err) {
+                alert("Takeover request connection error.");
+            }
+        }
+
+        // 5. SUBMIT CUSTOM MINUTES REMINDER ROUTINE
+        async function handleCustomReminderSubmit() {
+            if (!selectedStudentPhone) return;
+            const rawVal = parseInt(document.getElementById("custom-time-val").value);
+            const unit = document.getElementById("custom-time-unit").value;
+            
+            if (isNaN(rawVal) || rawVal <= 0) {
+                alert("Please input a valid duration number.");
+                return;
+            }
+            
+            let totalMinutes = rawVal;
+            if (unit === "hr") {
+                totalMinutes = rawVal * 60;
+            }
+
+            try {
+                const res = await fetch(`${BACKEND_URL}/dashboard/set-reminder`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        phone_number: selectedStudentPhone,
+                        remind_in_minutes: totalMinutes
+                    })
+                });
+                const data = await res.json();
+                if (data.status === "success") {
+                    const subtitle = document.getElementById("active-chat-subtitle");
+                    subtitle.innerHTML = `<span class="text-emerald-400 font-medium">⏰ Follow-up locked for +${rawVal} ${unit}(s)</span> — Monitoring countdown`;
+                    isEditingReminder = false; 
+                    document.getElementById("takeover-container").innerHTML = ""; 
+                    fetchStudents(); 
+                }
+            } catch (err) {
+                console.error("Failed to post timer details:", err);
+                isEditingReminder = false;
+            }
+        }
+
+        // INPUT EVENT HANDLERS
+        const managerInputEl = document.getElementById("manager-input");
+        managerInputEl.addEventListener("keydown", function(event) {
+            if (event.key === "Enter" && event.ctrlKey) {
+                event.preventDefault(); 
+                sendManualMessage(event); 
+            }
+        });
+
+        managerInputEl.addEventListener("input", function() {
+            this.style.height = "auto";
+            this.style.height = (this.scrollHeight) + "px";
+        });
+
+        // 6. SHIP MESSAGES
+        async function sendManualMessage(event) {
+            if (event) event.preventDefault(); 
+            const inputField = document.getElementById("manager-input");
+            const text = inputField.value.trim();
+
+            if (!text && !currentAttachmentFile) return;
+
+            // 🟢 1. INSTANTLY CLEAR INPUT BAR
+            inputField.value = "";       
+            inputField.style.height = "auto";
+
+            // 🟢 2. INSTANT UI UPDATE (0 Milliseconds)
+            // Render to screen immediately from local memory so the UI feels instant
+            if (!currentAttachmentFile && text) {
+                if (!window.chatCache) window.chatCache = {};
+                if (!window.chatCache[selectedStudentPhone]) window.chatCache[selectedStudentPhone] = [];
+
+                window.chatCache[selectedStudentPhone].push({
+                    sender: "manager",
+                    message_text: text,
+                    created_at: new Date().toISOString()
+                });
+
+                // Re-render feed instantly from memory
+                syncActiveMessagesFeed(window.chatCache[selectedStudentPhone]);
+            }
+
+            try {
+                let res;
+                if (currentAttachmentFile) {
+                    isSendingMedia = true; 
+                    const formData = new FormData();
+                    formData.append("phone_number", selectedStudentPhone);
+                    formData.append("caption", text);
+                    formData.append("file", currentAttachmentFile);
+
+                    res = await fetch(`${BACKEND_URL}/dashboard/send-media`, {
+                        method: "POST",
+                        body: formData 
+                    });
+                    clearAttachment();
+                } else {
+                    // Send payload to backend in background
+                    res = await fetch(`${BACKEND_URL}/dashboard/send-message`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            phone_number: selectedStudentPhone,
+                            message_type: "text",
+                            message_text: text
+                        })
+                    });
+                }
+                
+                const data = await res.json();
+                isSendingMedia = false; 
+                
+                if (data.status === "success") {
+                    // 🟢 3. NO TIMEOUT DELAY NEEDED!
+                    // The message is already safely displayed on screen. 
+                    // Refresh sidebar quietly without touching the active chat stream.
+                    fetchStudents();
+                } else {
+                    alert("Failed to queue message: " + (data.detail || "Unknown error"));
+                }
+            } catch (err) {
+                isSendingMedia = false;
+                console.error("Delivery error:", err);
+            }
+        }
+        // BACKGROUND SYNC POOL WORKERS
+        fetchStudents();
+        setInterval(fetchStudents, 4000);
+
+        // Periodically sync current message feeds without forcefully rewriting layout headers
+        setInterval(() => {
+            if (selectedStudentPhone && !isSendingMedia) {
+                syncActiveMessagesFeed();
+                fetch(`${BACKEND_URL}/dashboard/clear-unread/${selectedStudentPhone}`, { method: "POST" });
+            }
+        }, 4000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+venv/
+.env
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
+creds.json
+ngrok.exe
+.ngrok.exe.old
+venv311
+upload
