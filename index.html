@@ -413,7 +413,7 @@
 
             // OPTIMISTIC CACHE LAYER: Render cached messages instantly if they exist
             if (window.chatCache && window.chatCache[student.phone_number]) {
-                renderMessages(window.chatCache[student.phone_number]);
+                syncActiveMessagesFeed(window.chatCache[student.phone_number]);
             } else {
                 const chatContainer = document.getElementById("chat-messages-container");
                 if (chatContainer) {
@@ -472,6 +472,12 @@
             // Sync the final message feed from the network and silently populate the cache
             try {
                 await syncActiveMessagesFeed();
+                const msgStream = document.getElementById("chat-messages");
+                if (msgStream) {
+                    requestAnimationFrame(() => {
+                        msgStream.scrollTop = msgStream.scrollHeight;
+                    });
+                };
             } catch (err) {
                 console.error("Background sync failed:", err);
             }
@@ -587,6 +593,9 @@
                 });
                 
                 if (!isUserScrollingPastHistory) {
+                    requestAnimationFrame(() => {
+                        msgStream.scrollTop = msgStream.scrollHeight;
+                    });
                     msgStream.scrollTop = msgStream.scrollHeight;
                 }
             } catch (err) {
