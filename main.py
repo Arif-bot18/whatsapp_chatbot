@@ -525,7 +525,7 @@ def send_meta_whatsapp_request(url: str, headers: dict,basepayload:dict ,payload
     asynchronous to the main thread so the user dashboard never lags."""
 
     try:
-        response = requests.post(url,headers=headers,json=payload)
+        response = requests.post(url,headers=headers,json=basepayload)
         response_data = response.json()
 
         if response.status_code == 200:
