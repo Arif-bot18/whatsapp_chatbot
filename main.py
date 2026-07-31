@@ -12,7 +12,7 @@ from supabase import Client , create_client
 from typing import List, Optional
 from fastapi.middleware.cors import CORSMiddleware
 from services import send_text_message,send_button_message
-from config import supabase,_TOKEN,PHONE_NUMBER_ID,VERSION
+from config import supabase,META_TOKEN,PHONE_NUMBER_ID,VERSION
 from fastapi.staticfiles import StaticFiles
 from fastapi import File,UploadFile,Form
 from typing import Literal
@@ -23,7 +23,7 @@ load_dotenv()
 api_key = os.getenv("GROQ_API_KEY")
 base_dir = os.path.dirname(os.path.abspath(__file__))
 upload_dir = os.path.join(base_dir,"upload")
-_token = os.getenv("access_code")
+meta_token = os.getenv("access_code")
 os.makedirs(upload_dir,exist_ok =True)
 app = FastAPI()
 app.mount("/upload",StaticFiles(directory=upload_dir),name="upload")
@@ -251,7 +251,7 @@ def parser_classifier(message):
  
 
 
-# This is the "Handshake" code  needs
+# This is the "Handshake" code Meta needs
 @app.get("/webhook")
 async def verify_webhook(
     mode: str = Query(None, alias="hub.mode"),
@@ -260,7 +260,7 @@ async def verify_webhook(
 
     """ @app when anyone is request the to server this functions has to be execute /webhook is the system which send the data one system to another automatically
     args Query is used to get the data mode:str is hinting alias is to get the value of that variable """
-    # This must match EXACTLY what you type in the  Dashboard
+    # This must match EXACTLY what you type in the Meta Dashboard
     MY_VERIFY_TOKEN = os.getenv("verification_code")
 
     if mode == "subscribe" and token == MY_VERIFY_TOKEN:
@@ -290,7 +290,7 @@ async def receive_message(request: Request):
         msg_id = message_obj["id"]
 
         if msg_id in PROCESSED_MESSAGE_IDS:
-                print(f"⚠️  Retry Storm Blocked! Dropping Duplicate ID: ({msg_id})")
+                print(f"⚠️ Meta Retry Storm Blocked! Dropping Duplicate ID: ({msg_id})")
                 return {"status": "ignored_duplicate"}
         
         PROCESSED_MESSAGE_IDS.add(msg_id)
@@ -336,7 +336,7 @@ async def receive_message(request: Request):
         whatsapp_message(msg,user_number)
 
     except Exception as e:
-        print(f"Error parsing  JSON: {e}")
+        print(f"Error parsing Meta JSON: {e}")
 
     return None
 
@@ -382,7 +382,7 @@ async def dashboard_send_media(phone_number:str = Form(...),caption:str = Form(N
             message_type = "document"
         url = f"https://graph.facebook.com/{VERSION}/{PHONE_NUMBER_ID}/messages"
         headers = {
-            "Authorization": f"Bearer {_token}",
+            "Authorization": f"Bearer {meta_token}",
             "Content-Type": "application/json"
         }
 
@@ -427,10 +427,10 @@ async def dashboard_send_media(phone_number:str = Form(...),caption:str = Form(N
                 "status": "success",
                 "message": f"Media {message_type} sent successfully.",
                 "media_url": media_public_url,
-                "_message_id": response_data.get("messages", [{}])[0].get("id")}
+                "meta_message_id": response_data.get("messages", [{}])[0].get("id")}
         else:
             return {
-                "status": "_api_error",
+                "status": "meta_api_error",
                 "http_code": response.status_code,
                 "error_details": response_data
             }
@@ -522,8 +522,8 @@ async def dashboard_takeover(data :TakeoverRequest):
     except Exception as e:
         return {"status": "error", "detail": str(e)}
     
-def send__whatsapp_request(url: str, headers: dict,basepayload:dict ,payload: dict):
-    """Handles the slow outward network call to  and local Supabase database updates 
+def send_meta_whatsapp_request(url: str, headers: dict,basepayload:dict ,payload: dict):
+    """Handles the slow outward network call to Meta and local Supabase database updates 
     asynchronous to the main thread so the user dashboard never lags."""
 
     try:
@@ -543,13 +543,13 @@ def send__whatsapp_request(url: str, headers: dict,basepayload:dict ,payload: di
                 "sender": "manager",
                 "message_text": log_text
                 }).execute()
-            print(f"✅  Background Sync Success for +{payload['phone_number']}")
+            print(f"✅ Meta Background Sync Success for +{payload['phone_number']}")
 
         else:
-            print(f"❌  API Error for +{payload['phone_number']}: {response_data}")
+            print(f"❌ Meta API Error for +{payload['phone_number']}: {response_data}")
 
     except Exception as e:
-        print(f"❌  Background Sync Exception for +{payload['phone_number']}: {str(e)}")
+        print(f"❌ Meta Background Sync Exception for +{payload['phone_number']}: {str(e)}")
 
 
 
@@ -560,10 +560,10 @@ async def dashboard_send_message(payload: SendMessageRequest,background_tasks: B
     try:
         print("--- DEBUG MESSAGE RECEIPT ---")
         print(f"RECEIVED TYPE: '{payload.message_type}' | RECEIVED TEXT: '{payload.message_text}'")
-        print(f"--- TOKEN DEBUG --- Length: {len(_token)} | First 10 chars: '{_token[:10]}...'")
+        print(f"--- TOKEN DEBUG --- Length: {len(meta_token)} | First 10 chars: '{meta_token[:10]}...'")
         url = f"https://graph.facebook.com/{VERSION}/{PHONE_NUMBER_ID}/messages"
         headers = {
-            "Authorization":f"Bearer {_token}",
+            "Authorization":f"Bearer {meta_token}",
             "Content-Type":"application/json"
         }
 
@@ -647,7 +647,7 @@ async def dashboard_send_message(payload: SendMessageRequest,background_tasks: B
             "message_text":payload.message_text,
         }
 
-        background_tasks.add_task(send__whatsapp_request,url,headers,base_payload,payload_data_summary)
+        background_tasks.add_task(send_meta_whatsapp_request,url,headers,base_payload,payload_data_summary)
         
         return {"status": "success", "message": "Message sent successfully."}
 
