@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI , Request ,Query,Response,HTTPException,BackgroundTasks
 from openai import OpenAI
 from pydantic import BaseModel , HttpUrl
@@ -581,7 +582,7 @@ async def dashboard_send_message(payload: SendMessageRequest,background_tasks: B
         # 🟢 ADDED TEMPLATE CHECKER CONDITION:
         elif payload.message_type == "template":
             if not payload.message_text:
-                raise HTTPException(status_code=400, detail="Template type requires template registry name in 'message_text'")
+                raise HTTPException(status_code=400, details="Template type requires template registry name in 'message_text'")
 
 
             if payload.template_var1 or payload.template_var1.strip():
@@ -616,7 +617,7 @@ async def dashboard_send_message(payload: SendMessageRequest,background_tasks: B
 
         elif payload.message_type == "text":
             if not payload.message_text:
-                raise HTTPException(status_code=400,detail= "Text type requires 'message_text'")
+                raise HTTPException(status_code=400,details= "Text type requires 'message_text'")
             base_payload["text"] = {"body":payload.message_text}
 
         elif payload.message_type == "image":
@@ -636,7 +637,7 @@ async def dashboard_send_message(payload: SendMessageRequest,background_tasks: B
             if payload.message_text:
                 base_payload["document"]["caption"] = payload.message_text
         else:
-            raise HTTPException(status_code=400, detail="Invalid type. Use template,text, image, video, or document.")
+            raise HTTPException(status_code=400, details="Invalid type. Use template,text, image, video, or document.")
 
         payload_data_summary = {
             "phone_number" :payload.phone_number,
@@ -645,7 +646,7 @@ async def dashboard_send_message(payload: SendMessageRequest,background_tasks: B
         }
 
         background_tasks.add_task(send_meta_whatsapp_request,url,headers,base_payload,payload_data_summary)
-
+        
         return {"status": "success", "message": "Message sent successfully."}
 
     except HTTPException as he:
