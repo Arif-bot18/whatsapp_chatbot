@@ -559,6 +559,7 @@ async def dashboard_send_message(payload: SendMessageRequest,background_tasks: B
     try:
         print("--- DEBUG MESSAGE RECEIPT ---")
         print(f"RECEIVED TYPE: '{payload.message_type}' | RECEIVED TEXT: '{payload.message_text}'")
+        print(f"--- TOKEN DEBUG --- Length: {len(META_TOKEN)} | First 10 chars: '{META_TOKEN[:10]}...'")
         url = f"https://graph.facebook.com/{VERSION}/{PHONE_NUMBER_ID}/messages"
         headers = {
             "Authorization":f"Bearer {META_TOKEN}",
