@@ -349,16 +349,18 @@ def upload_file_to_supabase(supabase_client : Client, local_path :str):
         if not content_type:
             content_type = "application/octet-stream"
 
+        file_key = f"uploaded_files/{filename}"
         with open(local_path,"rb") as file:
             supabase_client.storage.from_("Institute Media").upload(
-                path = f"uploaded_file/{filename}",
+                path = file_key,
                 file = file,
                 file_option = {"content_type":content_type})
-        public_url = supabase_client.storage.from_("Institute Media").get_public_url(f"uploaded_files/{filename}")
+        public_url = supabase_client.storage.from_("Institute Media").get_public_url(file_key)
         return public_url
     except Exception as e:
         print(f"Upload failed:{e}")
         return None
+    
 @app.post("/dashboard/send-media")
 async def dashboard_send_media(phone_number:str = Form(...),caption:str = Form(None),file: UploadFile = File(...)):
     try:
