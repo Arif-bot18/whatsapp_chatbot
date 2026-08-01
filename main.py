@@ -23,7 +23,7 @@ load_dotenv()
 api_key = os.getenv("GROQ_API_KEY")
 base_dir = os.path.dirname(os.path.abspath(__file__))
 upload_dir = os.path.join(base_dir,"upload")
-meta_token = "EAAUcMTpPzYwBSJdOMQxe6SeB8XKz6xh1ZCXv3xZACp4CHN88IZAt3GH1MHFvT6PHmNnfaiksIO0i8FWEAtbW9a2InlM52Cfdio1ETXPpX1oJmg79Om9zWsTBhNBvFUCTy7DJa5bxVIC7ExQZBgCZADorQZAh5Vf959FgKamCp7EPYEY25SJJ9NYGI72O5udUF0NYZBpug6pU9JzZBawAyQc8D9zgt8XMFnxKRXsEKxa05sAXINWSqzVWU3UjWwfWwF3Lc1ZCsLeZB7ZAKXT3YHv1I1mT6g2hAZDZD"
+meta_token = os.getenv("access_code")
 os.makedirs(upload_dir,exist_ok =True)
 app = FastAPI()
 app.mount("/upload",StaticFiles(directory=upload_dir),name="upload")
