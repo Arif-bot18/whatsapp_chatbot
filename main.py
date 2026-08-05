@@ -72,13 +72,13 @@ def follow_up_checker():
                 print("mear bhai")
                 continue
             #this will execute at 1 hour
-            if diff >= 3600 and not data.get("followed_1h"):
+            if diff >= 160 and not data.get("followed_1h"):
                 data["followed_1h"] = True
                 supabase.table("Student").update({"followed_1h":True}).eq("phone_number",number).execute()
                 return send_button_message(body_text = "Hey 👋 just checking in — would you like to book your demo?",buttons = [{"id":"demo_book","title":"Free Demo Class"}],to_number = number)
 
             # this will excute after 24 hours
-            if  diff >= 86200  and not data.get("followed_24h"):
+            if  diff >= 250  and not data.get("followed_24h"):
                 data["followed_24h"] = True
                 supabase.table("Student").update({"followed_24h":True}).eq("phone_number",number).execute()
                 return send_button_message(body_text = """Hi 👋\nMany students like you start with a demo class.\nWant me to reserve a slot for you?""",buttons = [{"id":"demo_book","title":"Free Demo Class"}],to_number = number)
