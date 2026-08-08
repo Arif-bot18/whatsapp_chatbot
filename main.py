@@ -802,7 +802,7 @@ def whatsapp_message(user_msg:str,user_number:str):
             )
         
         if msg_type == "Question":
-            answer = question_handler(msg)
+            answer = question_handler(msg,user_number)
             return send_text_message(answer+"\n\nBy the way,our team will explain everything in your demo ", user_number)
         if any(word in msg for word in ["hii","hi","hello","hey"]):
             return send_text_message("Hey! i am here tell me what you want ",user_number)
